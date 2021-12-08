@@ -1,0 +1,49 @@
+---
+
+# installing filebeat on the webservers so that they can report to our elk server
+
+  - name: installing and launching filebeat
+    hosts: webservers
+    become: yes
+    tasks:
+
+# download filebeat from https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.1-amd64.deb
+
+    - name: download filebeat deb
+      command: curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.1-amd64.deb 
+ 
+# installing the docker file
+
+    - name: install filebeat deb
+      command: sudo dpkg -i filebeat-7.6.1-amd64.deb
+
+# install out filebeat.yml script
+
+    - name: drop in filebeat.yml 
+      copy:
+        # source on the ansible container 
+        src: /etc/ansible/files/filebeat-config.yml
+        # destination on the webserver
+        dest: /etc/filebeat/filebeat.yml
+
+    - name: enable and configure system module
+      command: filebeat modules enable system
+
+# run the setup
+
+    - name: setup filebeat
+      command: filebeat setup
+
+# start the filebeat service
+
+    - name: start filebeat service
+      command: service filebeat start
+
+# make the service start to run after boot up
+
+    - name: enable service filebeat on boot
+      systemd:
+        name: filebeat
+        enabled: yes
+ 
+
